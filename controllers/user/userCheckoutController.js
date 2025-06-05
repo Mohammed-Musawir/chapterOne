@@ -130,6 +130,9 @@ const loadCheckOutPage = async (req, res) => {
 };
 
 
+
+
+
 const applyCoupen = async (req, res) => {
   try {
       const { couponCode, subtotal, isPostOfferSubtotal } = req.body;

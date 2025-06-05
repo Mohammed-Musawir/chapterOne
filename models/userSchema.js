@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema({
             return Math.random().toString(36).substring(2, 10).toUpperCase();
         }
     },
+    referralBonusShown: {
+    type: Boolean,
+    default: false
+  },
     referralCount: {
         type: Number,
         default: 0

@@ -275,6 +275,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Check user active status on page load
     checkUserStatus();
+
+        setTimeout(() => {
+        checkReferralBonusStatus();
+    }, 1000);
     
     const wishlistButtons = document.querySelectorAll('.wishlist-btn');
     const cartButtons = document.querySelectorAll('.cart-btn');
@@ -402,7 +406,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 }
 
-    
+function checkReferralBonusStatus() {     
+    fetch('/api/user/referral-bonus-status', {         
+        method: 'GET',         
+        credentials: 'same-origin',         
+        headers: {             
+            'Content-Type': 'application/json'         
+        }     
+    })     
+    .then(response => response.json())     
+    .then(data => {         
+        if (data.success && data.showReferralBonus) {
+            Swal.fire({                 
+                title: '🎉 Referral Bonus Credited!',                 
+                html: `                     
+                    <div style="text-align: center;">                         
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>                         
+                        <h3 style="color: #8B5A2B; margin-bottom: 1rem;">Congratulations!</h3>                         
+                        <p>Your referral bonus has been credited to your wallet</p>                         
+                        <div style="background: #8B5A2B; color: white; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 1.5rem; font-weight: bold;">                             
+                            ₹${data.bonusAmount}                         
+                        </div>                         
+                        <p style="color: #666;">                             
+                            ${data.referralCode ? `Applied referral code: <strong>${data.referralCode}</strong>` : ''}                         
+                        </p>                     
+                    </div>                 
+                `,                 
+                icon: 'success',                 
+                confirmButtonColor: '#8B5A2B',                 
+                confirmButtonText: 'Awesome!'
+            });         
+        }     
+    })     
+    .catch(error => {         
+        console.error('Error checking referral bonus:', error);     
+    }); 
+}
+
+
     // Function to add book to wishlist
     function addToWishlist(bookId, heartIcon) {
         console.log("Adding to wishlist: ", bookId);
@@ -527,6 +568,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    
     
     // Common error handler function based on errorType
     function handleApiError(error) {

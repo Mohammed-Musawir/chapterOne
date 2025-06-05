@@ -999,11 +999,20 @@
                     <span>-₹<%= order.coupon.discount %></span>
                 </div>
                 <% } %>
-                <hr>
+                <hr> 
                 <div class="d-flex justify-content-between fw-bold">
                     <span>Total Amount:</span>
                     <span>₹<%= order.totalAmount.toFixed(2) %></span>
                 </div>
+
+                                <% if ( order.paymentMethod === 'razorPay' && order.paymentStatus === 'failed') { %>
+                <div class="mt-4 text-center">
+                    <a href="/checkout?retryOrderId=<%= order.orderId %>" class="btn btn-primary-brown">
+                        <i class="fas fa-sync-alt me-2"></i> Retry Payment
+                    </a>
+                    <p class="mt-2 small text-muted">Complete your payment to confirm this order.</p>
+                </div>
+                <% } %> 
         </div>
     </div>
 </div>

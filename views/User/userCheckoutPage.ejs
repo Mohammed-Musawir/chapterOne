@@ -729,6 +729,9 @@ body {
 
 <body>
 
+
+
+
     <div class="container">
         <!-- Breadcrumb Navigation -->
         <nav class="breadcrumb">
@@ -756,47 +759,61 @@ body {
             <!-- Left Side - Shipping & Payment -->
             <div class="checkout-left">
                 <!-- Shipping Address Section -->
-                <div class="section">
-                    <h2 class="section-title">Shipping Address</h2>
-                    <div class="address-list">
-                        <% if (typeof addresses !== 'undefined' && addresses.length > 0) { %>
-                            <% addresses.forEach(function(address) { %>
-                                <div class="address-card <%= address.isDefault ? 'selected' : '' %>" data-address-id="<%= address._id %>">
-                                    <span class="address-type">
-                                        <%= address.addressType %>
-                                    </span>
-                                    <div class="address-details">
-                                        <p><strong><%= address.fullName %></strong></p>
-                                        <p><%= address.houseNumber %>, <%= address.street %></p>
-                                        <p><%= address.landmark %></p>
-                                        <p><%= address.city %>, <%= address.state %>, <%= address.pincode %></p>
-                                        <% if (address.alternative_no) { %>
-                                            <p>Alt. Phone: <%= address.alternative_no %></p>
-                                        <% } %>
-                                        <% if (address.isDefault) { %>
-                                            <button class="address-select">Deliver Here</button>
-                                            <span class="default-badge">Default</span>
-
-                                        <% } %>
-                                    </div>
-                                    <div class="address-actions">
-                                        <% if (!address.isDefault) { %>
-                                            <button class="address-select">Deliver Here</button>
-                                        <% } %>
-                                    </div>
-                                </div>
-                            <% }); %>
-                        <% } else { %>
-                            <p>No addresses found. Please add a new address.</p>
-                        <% } %>
-                    </div>
-                    <a href="/account/addresses/add?returnUrl=/checkout" class="add-address-btn" style="text-decoration: none;">
-                        <i class="fas fa-plus"></i> Add New Address
-                    </a>
-                </div>
+<div class="section">                     
+    <h2 class="section-title">Shipping Address</h2>                     
+    <div class="address-list">                         
+        <% if (typeof addresses !== 'undefined' && addresses.length > 0) { %>                             
+            <% addresses.forEach(function(address) { 
+                // Check if this address should be selected
+                let isSelected = false;
+                if (typeof isRetryOrder !== 'undefined' && isRetryOrder && typeof selectedAddress !== 'undefined' && selectedAddress) {
+                    // For retry orders, select the address used in original order
+                    isSelected = address._id.toString() === selectedAddress._id.toString();
+                } else {
+                    // For normal orders, select default address
+                    isSelected = address.isDefault;
+                }
+            %>                                 
+                <div class="address-card <%= isSelected ? 'selected' : '' %>" data-address-id="<%= address._id %>">                                     
+                    <span class="address-type">                                         
+                        <%= address.addressType %>                                     
+                    </span>                                     
+                    <div class="address-details">                                         
+                        <p><strong><%= address.fullName %></strong></p>                                         
+                        <p><%= address.houseNumber %>, <%= address.street %></p>                                         
+                        <p><%= address.landmark %></p>                                         
+                        <p><%= address.city %>, <%= address.state %>, <%= address.pincode %></p>                                         
+                        <% if (address.alternative_no) { %>                                             
+                            <p>Alt. Phone: <%= address.alternative_no %></p>                                         
+                        <% } %>                                         
+                        <% if (isSelected) { %>                                             
+                            <button class="address-select">Deliver Here</button>                                             
+                            <% if (address.isDefault && (!isRetryOrder || !selectedAddress)) { %>
+                                <span class="default-badge">Default</span>
+                            <% } %>
+                            <% if (isRetryOrder && selectedAddress && address._id.toString() === selectedAddress._id.toString()) { %>
+                                <span class="retry-badge">Previously Used</span>
+                            <% } %>                                         
+                        <% } %>                                     
+                    </div>                                     
+                    <div class="address-actions">                                         
+                        <% if (!isSelected) { %>                                             
+                            <button class="address-select">Deliver Here</button>                                         
+                        <% } %>                                     
+                    </div>                                 
+                </div>                             
+            <% }); %>                         
+        <% } else { %>                             
+            <p>No addresses found. Please add a new address.</p>                         
+        <% } %>                     
+    </div>                     
+    <a href="/account/addresses/add?returnUrl=/checkout" class="add-address-btn" style="text-decoration: none;">                         
+        <i class="fas fa-plus"></i> Add New Address                     
+    </a>                 
+</div>
 
                 <!-- Payment Methods Section -->
-                <div class="section">
+                <div class="section"> 
                     <h2 class="section-title">Payment Method</h2>
                     <div class="payment-methods">
                         <div class="payment-option selected">
@@ -859,7 +876,7 @@ body {
                   <% } else { %>
                       <img src="/images/placeholder.jpg" alt="Product Image">
                   <% } %>
-              </div>
+              </div> 
               <div class="item-details">
                   <h4 class="item-name"><%= item.product.name %></h4>
                   
@@ -916,12 +933,13 @@ body {
             <select id="coupon-select" class="coupon-select">
                 <option value="">Select a coupon</option>
                 <% activeCoupons.forEach(function(coupon) { %>
-                    <option value="<%= coupon.couponCode %>" 
-                            data-description="Discount of ₹<%= coupon.offerPrice %>" 
-                            data-min="<%= coupon.minAmount %>" 
-                            data-discount="<%= coupon.offerPrice %>" 
+                    <option value="<%= coupon.couponCode %>"
+                            data-description="Discount of ₹<%= coupon.offerPrice %>"
+                            data-min="<%= coupon.minAmount %>"
+                            data-discount="<%= coupon.offerPrice %>"
                             data-type="fixed"
-                            data-expire="<%= coupon.expireDate %>">
+                            data-expire="<%= coupon.expireDate %>"
+                            <% if (typeof appliedCoupon !== 'undefined' && appliedCoupon && appliedCoupon.length > 0 && appliedCoupon[0].couponCode === coupon.couponCode) { %>selected<% } %>>
                         <%= coupon.couponCode %> - ₹<%= coupon.offerPrice %> off
                     </option>
                 <% }); %>
@@ -934,7 +952,7 @@ body {
                 Select a coupon to see details
             </div>
             
-            <!-- Eligibility Message - This is what we're enhancing -->
+            <!-- Eligibility Message -->
             <div id="coupon-eligibility" class="coupon-warning" style="display: none;">
                 <i class="fas fa-exclamation-circle"></i>
                 <div class="min-order-message">
@@ -956,13 +974,13 @@ body {
         </div>
         
         <!-- Applied Coupon Section -->
-        <div id="applied-coupon" class="applied-coupon" style="display: none;">
+        <div id="applied-coupon" class="applied-coupon" style="<%= (typeof appliedCoupon !== 'undefined' && appliedCoupon && appliedCoupon.length > 0) ? 'display: flex;' : 'display: none;' %>">
             <div class="applied-badge">
                 <i class="fas fa-tag"></i> Applied:
             </div>
             <div class="applied-details">
-                <span id="applied-coupon-name" class="coupon-code"></span>
-                <span id="applied-coupon-discount" class="discount-amount"></span>
+                <span id="applied-coupon-name" class="coupon-code"><%= (typeof appliedCoupon !== 'undefined' && appliedCoupon && appliedCoupon.length > 0) ? appliedCoupon[0].couponCode : '' %></span>
+                <span id="applied-coupon-discount" class="discount-amount"><%= (typeof appliedCoupon !== 'undefined' && appliedCoupon && appliedCoupon.length > 0) ? '-₹' + appliedCoupon[0].discount : '' %></span>
             </div>
             <button id="remove-coupon-btn" class="remove-coupon-btn">
                 <i class="fas fa-times"></i>
@@ -1061,6 +1079,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeWalletPayment(); 
   checkCODEligibility();
   setTimeout(checkCODEligibility, 500);
+  checkAndApplyRetryOrderCoupon();
 });
 
 function checkUserStatus() {
@@ -1148,6 +1167,98 @@ function checkUserStatus() {
             confirmButtonColor: '#8B5A2B'
         });
     });
+}
+
+
+function checkAndApplyRetryOrderCoupon() {
+  // Check if this is a retry order by looking for the retry order ID in the page
+  const isRetryOrder = document.body.classList.contains('retry-order') || 
+                       document.querySelector('[data-retry-order="true"]') !== null;
+  
+  if (!isRetryOrder) return;
+  
+  // Get the applied coupon element and check if there's a pre-selected coupon
+  const appliedCouponElem = document.getElementById('applied-coupon');
+  const appliedCouponNameElem = document.getElementById('applied-coupon-name');
+  
+  // If there's already a pre-selected coupon (from the server-side rendering)
+  if (appliedCouponElem && 
+      appliedCouponElem.style.display !== 'none' && 
+      appliedCouponNameElem && 
+      appliedCouponNameElem.textContent.trim() !== '') {
+    // The coupon is already applied from the server-side
+    return;
+  }
+  
+  // Look for the coupon that was used in the original order in the select dropdown
+  const couponSelect = document.getElementById('coupon-select');
+  if (!couponSelect) return;
+  
+  // Get the retry order coupon code (if any)
+  const retryOrderCouponCode = document.querySelector('[data-retry-order-coupon]')?.dataset.retryOrderCoupon;
+  
+  if (!retryOrderCouponCode) return;
+  
+  // Find and select the matching coupon in the dropdown
+  let couponFound = false;
+  for (let i = 0; i < couponSelect.options.length; i++) {
+    if (couponSelect.options[i].value === retryOrderCouponCode) {
+      couponSelect.selectedIndex = i;
+      couponFound = true;
+      
+      // Trigger the change event to update coupon details
+      const changeEvent = new Event('change');
+      couponSelect.dispatchEvent(changeEvent);
+      
+      break;
+    }
+  }
+  
+  if (couponFound) {
+    // Get subtotal for the coupon application
+    let subtotal = 0;
+    document.querySelectorAll('.price-row').forEach(row => {
+      const label = row.querySelector('.price-label');
+      if (label && label.textContent.trim() === 'Subtotal') {
+        const valueElem = row.querySelector('.price-value');
+        if (valueElem) {
+          subtotal = parseFloat(valueElem.textContent.replace('₹', '')) || 0;
+        }
+      }
+    });
+    
+    // Small delay to ensure UI updates before applying
+    setTimeout(() => {
+      // Get elements needed for the coupon application
+      const elements = {
+        couponSelect: document.getElementById('coupon-select'),
+        applyButton: document.getElementById('apply-coupon-btn'),
+        removeButton: document.getElementById('remove-coupon-btn'),
+        discountRow: document.getElementById('discount-row'),
+        discountValue: document.getElementById('discount-value'),
+        totalValue: document.getElementById('total-value'),
+        appliedCouponElem: document.getElementById('applied-coupon'),
+        appliedCouponNameElem: document.getElementById('applied-coupon-name'),
+        appliedCouponDiscountElem: document.getElementById('applied-coupon-discount')
+      };
+      
+      // Check if coupon is eligible before automatic application
+      const selectedOption = couponSelect.options[couponSelect.selectedIndex];
+      const minOrderValue = parseFloat(selectedOption.dataset.min) || 0;
+      
+      if (subtotal >= minOrderValue) {
+        // Show a subtle notification that we're applying the coupon
+        Toast.fire({
+          icon: 'info',
+          title: 'Applying previous coupon...',
+          background: themeColors.light
+        });
+        
+        // Auto-apply the coupon
+        applyCoupon(retryOrderCouponCode, subtotal, elements);
+      }
+    }, 300);
+  }
 }
 
 
@@ -1734,7 +1845,7 @@ function handleRazorpaySuccess(response, orderDetails) {
   // Show loading state
   showLoadingSpinner('Verifying Payment', 'Please wait while we confirm your payment...');
   
-  // Send the payment details to your server for verification
+  
   fetch('/api/verify-razorpay-payment', {
     method: 'POST',
     headers: {

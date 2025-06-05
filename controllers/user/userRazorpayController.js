@@ -18,7 +18,6 @@ const razorpayController = {
       
       const cart = await Cart.findOne({ userId }).populate('books.product'); 
       if (!cart || cart.books.length === 0) {
-        console.log(` adfadf ${cart}`)
         return res.status(400).json({ success: false, message: 'Your cart is empty' });
       }
       
@@ -42,6 +41,9 @@ const razorpayController = {
       
       const receiptId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
       
+        req.session.pendingOrder =  orderDetails;
+       
+
       const result = await razorpayService.createOrder(
         amount,
         'INR',
@@ -64,9 +66,9 @@ const razorpayController = {
     try {
       const { paymentId, orderId, signature, orderDetails } = req.body;
   
-     
       const userId = req.user._id || req.user.id;
       
+      console.log(orderId)
       if (!paymentId || !orderId || !signature || !orderDetails) {
         return res.status(400).json({ 
           success: false, 
@@ -216,6 +218,8 @@ const razorpayController = {
       
       const savedOrder = await newOrder.save();
       
+           req.session.pendingOrder = null;
+
       
       for (const item of cart.books) {
         await Product.findByIdAndUpdate(
@@ -230,8 +234,8 @@ const razorpayController = {
         { $set: { books: [] } }
       );
       
-      return res.status(200).json({
-        success: true,
+      return res.status(400).json({
+        success: false,
         message: 'Payment verified and order created successfully',
         orderId: savedOrder.orderId 
       });
@@ -282,7 +286,7 @@ const razorpayController = {
     try {
       console.log('User cancelled order after payment failure');
       
-      res.redirect('/cart');
+      res.redirect('/shop');
     } catch (error) {
       console.error('Cancel order error:', error);
       res.redirect('/cart');

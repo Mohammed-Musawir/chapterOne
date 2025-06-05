@@ -9,6 +9,7 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 const JWT_Config = require('../../config/jwt');
 const { use } = require('passport');
+const  addTransaction   = require('../../services/transactionService');
 
 
 
@@ -428,8 +429,7 @@ const loadSignup = async (req,res) => {
 
 const signup = async (req, res) => {
     try {
-        const { firstName, lastName, email, mobileNumber, password, confirmPassword } = req.body;
-        console.log(req.body);
+        const { firstName, lastName, email, mobileNumber, password, confirmPassword ,referralCode } = req.body;
 
         
         if (!firstName || !lastName || !email || !mobileNumber || !password || !confirmPassword) {
@@ -495,13 +495,34 @@ const signup = async (req, res) => {
             });
         }
 
+                let validatedReferralCode = null;
+        if (referralCode && referralCode.trim() !== '') {
+            const referralUser = await userModel.findOne({ 
+                referralCode: referralCode.trim().toUpperCase() 
+            });
+            
+            if (!referralUser) {
+                console.log("Invalid referral code provided:", referralCode);
+                return res.status(400).json({
+                    success: false,
+                    errors: {
+                        referralCode: "Invalid referral code. Please check and try again."
+                    }
+                });
+            }
+
+             validatedReferralCode = referralCode.trim().toUpperCase();
+            console.log("Valid referral code provided:", validatedReferralCode);
+        }
+
         
         req.session.userData = {
             firstname: firstName,
             lastname: lastName,
             email,
             mobile: mobileNumber,
-            password: password
+            password: password,
+            referralCode: validatedReferralCode
         };
 
         
@@ -572,12 +593,23 @@ const signup_Verify_otp = async (req,res) => {
 
         const hashedPassword = await bycript.hash(req.session.userData.password,10)
         
+         const referrer = await userModel.findOne({ referralCode:req.session.userData.referralCode });
+
+                 if (!referrer) {
+            return res.status(404).json({
+                success: false,
+                message: "Invalid referral code"
+            });
+        }
+
         let user = new userModel({
             firstname: req.session.userData.firstname,
             lastname: req.session.userData.lastname,
             email: req.session.userData.email,
             mobile: req.session.userData.mobile,
-            password: hashedPassword
+            password: hashedPassword,
+            hasAppliedReferral:true,
+            hasAppliedReferralCode:req.session.userData.referralCode
         });
         await user.save();
 

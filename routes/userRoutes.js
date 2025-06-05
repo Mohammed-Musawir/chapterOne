@@ -147,7 +147,7 @@ router.route('/account/edit-profile')
 .get(AccountProfileController.loadEditProfile)
 .post(upload.single('profileImage'),AccountProfileController.editProfile);
 
-
+ 
 router.route('/account/change-password')
   .get(AccountProfileController.loadChangePass)
   .post(AccountProfileController.changePass);
@@ -161,7 +161,7 @@ router.post('/account/resend-otp',AccountProfileController.resendChangePassOtp);
 
 router.route('/account/addresses/add')
     .get(profileAddressController.loadAddAddress)
-    .post(profileAddressController.addAddress);
+    .post(profileAddressController.addAddress); 
 
 router.delete('/account/addresses/delete/:id',profileAddressController.deleteAddress);
 router.post('/account/addresses/make-default/:id',profileAddressController.makeDefault);
@@ -199,7 +199,7 @@ router.post('/cart/check-stock',cartController.checkStock);
 
 
 
-router.get('/checkout',checkoutPageMiddleware,checkOutController.loadCheckOutPage);
+router.get('/checkout',checkoutPageMiddleware,checkOutController.loadCheckOutPage); 
 
 router.post('/api/apply-coupon',checkOutController.applyCoupen);
 router.post('/api/remove-coupon',checkOutController.removeCoupon);
@@ -209,7 +209,7 @@ router.get('/api/wallet/balance',checkOutController.walletBalance);
 router.post('/api/wallet/pay',checkOutController.walletPay);
 
 
-
+ 
 router.post('/api/create-razorpay-order',razorpayController.createRazorpayOrder);
 router.post('/api/verify-razorpay-payment',razorpayController.verifyRazorpayPayment);
 router.get('/payment-failed',razorpayController.userPaymentError);
@@ -220,13 +220,13 @@ router.get('/retry-payment', razorpayController.retryPayment);
 router.post('/place-order',orderController.userPlacerOrder);
 router.get('/account/orders',orderController.loadOrderListPage);
 router.get(`/account/orders/:orderId/invoice`,invoiceDownloadPDF)
-
+ 
 
 router.get('/order-placed/:orderId',orderController.loadOrderPlacedConfirmation);
 router.get('/orders/:orderId',orderController.loadOrderViewPage); 
  
 
-
+router.post('/api/orders/cancel',orderController.cancelOrder)
 router.post('/orders/:orderId/single-product/cancel',orderController.cancelSingleProduct);
 router.post('/orders/:orderId/single-product/return',orderController.returnSingleProduct);
 router.post('/orders/:orderId/multiple-products/cancel',orderController.bulkProductCancel);
@@ -235,7 +235,7 @@ router.post('/orders/:orderId/multiple-products/return',orderController.bulkProd
 
 
 router.get('/referral',referralController.loadRefferal);
-router.post('/referral/apply',referralController.applyReferral);
+router.get('/api/user/referral-bonus-status',referralController.referralBonusStatus);
 
 
 router.use((req, res, next) => {

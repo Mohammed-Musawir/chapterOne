@@ -22,58 +22,65 @@ const loadRefferal = async (req,res) => {
     }
 }
 
-const applyReferral = async (req,res) => {
+
+const referralBonusStatus = async (req,res) => {
     try {
-        const { referralCode } = req.body;
 
-
-        const userId = req.user._id || req.user.id;
-
-        const user = await userModal.findById(userId);
-
-        if (user.hasAppliedReferral) {
-            return res.status(400).json({
+        const userId = req.user.id || req.user._id;
+         if (!userId) {
+            return res.status(401).json({
                 success: false,
-                message: "You have already used a referral code"
+                errorType: 'UNAUTHORIZED',
+                message: 'User not authenticated'
             });
         }
 
-        const referrer = await userModal.findOne({ referralCode });
+                const user = await userModal.findById(userId);
+                 const referrer = await userModal.findOne({ referralCode:user.
+hasAppliedReferralCode });
+
+
         
-        if (!referrer) {
+
+        if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "Invalid referral code"
+                errorType: 'USER_NOT_FOUND',
+                message: 'User not found'
             });
         }
 
-        if (referrer._id.toString() === userId.toString()) {
-            return res.status(400).json({
-                success: false,
-                message: "You cannot use your own referral code"
+
+
+                const shouldShowBonus = user.hasAppliedReferral && !user.referralBonusShown;
+
+        if (shouldShowBonus) {
+            await userModal.findByIdAndUpdate(userId, {
+                referralBonusShown: true
+            }); 
+                            await addTransaction(userId, 'Credit', 100, 'Referral Bonus');
+                await addTransaction(referrer._id, 'Credit', 100, 'Referral Reward - Friend Joined');
+
+            return res.json({
+                success: true,
+                showReferralBonus: true,
+                message: 'Referral bonus credited to your wallet!',
+                bonusAmount: 100,
+                referralCode: user.hasAppliedReferralCode
             });
         }
 
-        user.hasAppliedReferral = true;
-        user.hasAppliedReferralCode = referralCode;
-        await user.save();
-
-        
-        
-        await addTransaction(userId, 'Credit', 100, 'Referral Bonus');
-        await addTransaction(referrer._id, 'Credit', 100, 'Referral Reward - Friend Joined');
-
-        res.status(200).json({
+         return res.json({
             success: true,
-            message: "Referral applied successfully"
+            showReferralBonus: false,
+            message: 'No referral bonus to show'
         });
-
     } catch (error) {
-        console.error("Error applying referral:", error);
-        res.status(500).json({
+                console.error('Error checking referral bonus status:', error);
+        return res.status(500).json({
             success: false,
-            message: "Failed to apply referral",
-            error: error.message
+            errorType: 'SERVER_ERROR',
+            message: 'Internal server error'
         });
     }
 }
@@ -81,5 +88,5 @@ const applyReferral = async (req,res) => {
 
 module.exports = {
     loadRefferal,
-    applyReferral
+    referralBonusStatus
 }

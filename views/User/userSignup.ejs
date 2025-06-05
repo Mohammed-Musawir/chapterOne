@@ -246,6 +246,19 @@
         .swal2-confirm:focus {
             box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.5) !important;
         }
+
+        /* Optional field styling */
+        .optional-text {
+            color: var(--secondary-brown);
+            font-size: 0.85rem;
+            font-style: italic;
+            margin-left: 5px;
+        }
+
+        .referral-icon {
+            color: var(--secondary-brown);
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -283,6 +296,14 @@
                 <label for="mobile" class="form-label">Mobile Number</label>
                 <input type="tel" class="form-control" id="mobile" name="mobileNumber" placeholder="Type Mobileno:">
                 <div class="error-message" id="mobileError"></div>
+            </div>
+            <div class="mb-3">
+                <label for="referralCode" class="form-label">
+                    <i class="fas fa-gift referral-icon"></i>Referral Code
+                    <span class="optional-text">(Optional)</span>
+                </label>
+                <input type="text" class="form-control" id="referralCode" name="referralCode" placeholder="Enter referral code if you have one">
+                <div class="error-message" id="referralCodeError"></div>
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
@@ -385,10 +406,10 @@
             errorElement.style.display = 'none';
         }
     }
-
+ 
     // Helper function to clear all errors
     function clearAllErrors() {
-        const fields = ['firstName', 'lastName', 'email', 'mobile', 'password', 'confirmPassword'];
+        const fields = ['firstName', 'lastName', 'email', 'mobile', 'referralCode', 'password', 'confirmPassword'];
         fields.forEach(field => clearError(field));
     }
 
@@ -431,6 +452,19 @@
         } else if (!mobileRegex.test(mobile)) {
             showError('mobile', 'Please enter a valid mobile number. It should be 10 digits and not contain repeated patterns');
             isValid = false;
+        }
+
+        // Referral Code validation (optional - only validate if provided)
+        const referralCode = document.getElementById('referralCode').value.trim();
+        if (referralCode) {
+            // Basic validation - you can customize this based on your referral code format
+            if (referralCode.length < 3) {
+                showError('referralCode', 'Referral code must be at least 3 characters long');
+                isValid = false;
+            } else if (!/^[A-Za-z0-9]+$/.test(referralCode)) {
+                showError('referralCode', 'Referral code can only contain letters and numbers');
+                isValid = false;
+            }
         }
 
         // Password validation - must match server-side regex
@@ -526,7 +560,10 @@
         const formData = new FormData(this);
         const formDataObj = {};
         formData.forEach((value, key) => {
-            formDataObj[key] = value;
+            // Only include non-empty values or required fields
+            if (value.trim() !== '' || key !== 'referralCode') {
+                formDataObj[key] = value.trim();
+            }
         });
         
         // Send fetch request
@@ -563,6 +600,9 @@
                 } else if (data.errorType === 'userExists') {
                     // Handle specific error types
                     showError('email', 'A user with this email already exists. Please log in instead.');
+                } else if (data.errorType === 'invalidReferral') {
+                    // Handle invalid referral code
+                    showError('referralCode', data.message || 'Invalid referral code. Please check and try again.');
                 } else if (data.message) {
                     // General error message
                     showError('email', data.message);
@@ -592,6 +632,8 @@
             showError('email', errorMessage || 'A user with this email already exists. Please log in instead.');
         } else if (errorType === 'signupFailed') {
             showError('email', errorMessage || 'There was a problem with your signup. Please try again.');
+        } else if (errorType === 'invalidReferral') {
+            showError('referralCode', errorMessage || 'Invalid referral code. Please check and try again.');
         }
         
         // Initialize SweetAlert2 with theme colors

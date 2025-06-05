@@ -357,6 +357,7 @@
                 <div class="card-body">
                     <form action="/account/addresses/add" method="POST">
                         <input type="hidden" name="returnUrl" value="<%= returnUrl %>">
+                        <input type="hidden" name="retryOrderId" value="<%= retryOrderId %>">
                         
                         <!-- Full Name -->
                         <div class="mb-3">
@@ -578,6 +579,7 @@
             const addressType = document.querySelector('input[name="addressType"]:checked').value;
             const isDefault = document.getElementById('isDefault').checked;
             const returnUrl = document.querySelector('input[name="returnUrl"]').value;
+            const retryOrderId = document.querySelector('input[name="retryOrderId"]').value;
             
             // Initialize validation status
             let isValid = true;
@@ -662,6 +664,9 @@
                     returnUrl: returnUrl
                 };
                 
+                if(retryOrderId) {
+                    formData.retryOrderId = retryOrderId
+                }
                 // Send data using fetch
                 fetch('/account/addresses/add', {
                     method: 'POST',
@@ -693,8 +698,14 @@
                             confirmButtonText: 'OK'
                         }).then((sweet) => {
                             if (sweet.isConfirmed) {
-                                // Redirect to profile page or returnUrl
-                                window.location.href = result.data.returnUrl || '/account/profile';
+                               const returnUrl = result.data.returnUrl; // e.g. "/checkout"
+                                const retryOrderId = result.data.retryOrderId; // e.g. "abc123"
+
+                                // Check if retryOrderId exists, and build the URL accordingly
+                                const finalUrl = retryOrderId
+                                ? `${returnUrl}?retryOrderId=${retryOrderId}`
+                                : returnUrl;
+                                window.location.href = finalUrl ;
                             }
                         });
                     } else {

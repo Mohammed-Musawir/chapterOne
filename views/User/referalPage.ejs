@@ -607,40 +607,7 @@
                 </div>
             </div>
             
-            <!-- Apply Referral Card -->
-            <% if (!user.hasAppliedReferral) { %>
-            <div class="content-card apply-referral-card">
-                <div class="card-header">
-                    <h5>Apply a Referral Code</h5>
-                </div>
-                <div class="card-body">
-                    <p>Have a friend's referral code? Apply it below to get ₹100 off your first order!</p>
-                    <!-- Updated to use fetch instead of form submission -->
-                    <div class="row">
-                        <div class="col-md-8">
-                            <input type="text" id="referralCodeInput" class="form-control" placeholder="Enter referral code" required>
-                        </div>
-                        <div class="col-md-4">
-                            <button id="applyReferralBtn" class="btn apply-btn w-100">Apply Code</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <% } else { %>
-            <div class="content-card apply-referral-card">
-                <div class="card-header">
-                    <h5>Referral Status</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle me-2"></i> You have successfully applied a referral code!
-                    </div>
-                    <p>You've already applied a referral code to your account. Your ₹100 discount will be automatically applied to your first order.</p>
-                </div>
-            </div>
-            <% } %>
-        </div>
-    </div>
+   
 
     <!-- Bootstrap JS and Popper.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -677,71 +644,9 @@
             });
         }
 
-        // Apply referral code using fetch API
-        document.getElementById('applyReferralBtn')?.addEventListener('click', function() {
-            const referralCodeInput = document.getElementById('referralCodeInput');
-            const referralCode = referralCodeInput.value.trim();
-            
-            if (!referralCode) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Empty Code',
-                    text: 'Please enter a referral code',
-                    confirmButtonColor: '#8B5A2B'
-                });
-                return;
-            }
-
-            // Show loading indicator
-            Swal.fire({
-                title: 'Processing...',
-                text: 'Applying your referral code',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                showConfirmButton: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            fetch('/referral/apply', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ referralCode: referralCode })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: data.message || 'Referral code applied successfully!',
-                        confirmButtonColor: '#8B5A2B'
-                    }).then(() => {
-                        // Reload the page to show updated status
-                        window.location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: data.message || 'Failed to apply referral code',
-                        confirmButtonColor: '#8B5A2B'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Something went wrong. Please try again later.',
-                    confirmButtonColor: '#8B5A2B'
-                });
-            });
-        });
+           
+           
+        
     </script>
 </body>
 </html>

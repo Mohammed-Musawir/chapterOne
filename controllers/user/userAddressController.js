@@ -5,12 +5,13 @@ const loadAddAddress = async (req, res) => {
   try {
     const userId = req.user._id || req.user.id;
     const user = await userModal.findById(userId);
-    const returnUrl = req.query.returnUrl || "/account/profile";
+    const returnUrl = req.query.returnUrl;
+    const retryOrderId = req.query.retryOrderId;
 
     req.session.returnUrl = returnUrl;
 
 
-    res.render("User/userAddAddress", { user, returnUrl });
+    res.render("User/userAddAddress", { user, returnUrl , retryOrderId });
   } catch (error) {
     console.log(`Error in address Controller in load add address and the error is 
             ${error}`);
@@ -31,12 +32,10 @@ const addAddress = async (req, res) => {
       pincode,
       addressType,
       isDefault,
-       returnUrl = req.body.returnUrl || req.session.returnUrl || "/account/profile"
+       returnUrl = req.body.returnUrl || req.session.returnUrl ,
+       retryOrderId = req.body.returnUrl || req.session.returnUrl 
     } = req.body;
 
-
-    
-  
   const errors = {};
     
   
@@ -158,7 +157,7 @@ const addAddress = async (req, res) => {
     await newAddress.save();
 
     console.log(`address saved`);
-    res.status(200).json({ message: "Address added successfully!", returnUrl });
+    res.status(200).json({ message: "Address added successfully!", returnUrl ,retryOrderId });
   } catch (error) {
     console.log(`Error in adding address in address controller 
             the error is ${error}`);

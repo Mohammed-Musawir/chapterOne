@@ -324,7 +324,7 @@ const loadOrderViewPage = async (req, res) => {
           endDate: { $gte: new Date() }       
       }).populate('product category');        
 
-      
+       
       for (const product of order.products) {           
           
           const productOffers = activeOffers.filter(offer => {               
@@ -379,7 +379,7 @@ const loadOrderViewPage = async (req, res) => {
           }       
       }        
 
-      
+      console.log(order);
       res.render("User/userOrderViewPage", {           
           user,           
           order,           
@@ -829,8 +829,6 @@ const cancelSingleProduct = async (req, res) => {
   };
 
 
-
-
   const bulkProductReturn = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -994,9 +992,118 @@ const cancelSingleProduct = async (req, res) => {
 }
 
 
+const cancelOrder = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user._id;
+    
+    
+    const pendingOrder = req.session.pendingOrder;
+    
+    if (!pendingOrder) {
+      
+      return res.status(404).json({ success: false, message: "No pending order found to cancel" });
+    }
+        const addressDetails = await addressModel.findById(pendingOrder.addressId);
+
+    
+           const productPromises = pendingOrder.products.map(async (item) => {
+                  try {
+                    const productDetails = await productModel.findById(item.productId);
+                    
+                    if (!productDetails) {
+                      throw new Error(`Product with ID ${item.productId} not found`);
+                    }
+                    
+                    return {
+                      product: item.productId,
+                      productDetails: {
+                        name: productDetails.name,
+                        writer: productDetails.writer,
+                        salePrice: productDetails.salePrice,
+                        productImages: productDetails.productImages,
+                        discoundedPrice: item.discountedPrice
+                      },
+                      quantity: item.quantity,
+                      productOrderStatus: 'pending',
+                      productOrderCancellation: {
+                        reason: 'Payment failed or cancelled by user',
+                        cancelledAt: new Date()
+                      }
+                    };
+                  } catch (error) {
+                    console.error(`Error processing product ${item.productId}: ${error}`);
+                    throw error;
+                  }
+                });
+
+                const products = await Promise.all(productPromises);
+
+                    const orderData = {
+                  userId: userId,
+                  products: products,
+                  shippingAddress: {
+                    userId: userId,
+                    fullName: addressDetails.fullName,
+                    alternative_no: addressDetails.alternative_no,
+                    houseNumber: addressDetails.houseNumber,
+                    street: addressDetails.street,
+                    landmark: addressDetails.landmark,
+                    city: addressDetails.city,
+                    state: addressDetails.state,
+                    pincode: addressDetails.pincode,
+                    addressType: addressDetails.addressType
+                  },
+                  subtotal: pendingOrder.subtotal,
+                  shippingCost: pendingOrder.shippingCost || 0,
+                  totalAmount: pendingOrder.totalAmount,
+                  paymentMethod: pendingOrder.paymentMethod,
+                  paymentStatus: 'failed',
+                  paymentError: 'Payment process cancelled by user',
+                  orderStatus: 'cancelled',
+                  gstAmount: pendingOrder.gstAmount,
+                  orderCancellation: {
+                    reason: 'Payment failed or cancelled by user',
+                    cancelledAt: new Date()
+                  }
+                  
+                }
+    
+                
+                      if (pendingOrder.coupon) {
+      orderData.coupon = {
+        couponCode: pendingOrder.coupon.couponCode,
+        discount: pendingOrder.coupon.couponDiscount
+      };
+    }
+
+        const cancelledOrder = new orderModel(orderData);
+    const savedOrder = await cancelledOrder.save();
+
+     req.session.pendingOrder = null;
+
+           await cartModel.findOneAndUpdate(
+             { userId },
+             { $set: { books: [] } }
+           );
+
+    return res.status(400).json({ 
+      success: true, 
+      message: "Order cancelled successfully",
+      cancelledOrder:savedOrder
+    });
+    
+  } catch (error) {
+    console.log(`Error cancelling order: ${error}`); 
+    res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
+  } 
+}
+
+
+
 module.exports = {
     
     userPlacerOrder,
+    cancelOrder,
     loadOrderPlacedConfirmation,
 
     loadOrderListPage,

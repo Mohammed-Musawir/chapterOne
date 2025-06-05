@@ -282,96 +282,96 @@
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-          document.addEventListener('DOMContentLoaded', function() {
-
-checkUserStatus()
+        document.addEventListener('DOMContentLoaded', function() {
+            checkUserStatus();
 
             function checkUserStatus() {
-    fetch('/api/user/status', {
-        method: 'GET',
-        credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json()) // Convert response to JSON
-    .then(data => {
-        if (data.success) {
-            return;
-        }
-
-        // Handle errors based on errorType
-        switch (data.errorType) {
-            case 'USER_BLOCKED':
-                Swal.fire({
-                    title: 'Account Inactive',
-                    text: 'Your account is inactive. Please contact support for assistance.',
-                    icon: 'warning',
-                    confirmButtonColor: '#8B5A2B',
-                    confirmButtonText: 'Back to Login'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = '/login';
+                fetch('/api/user/status', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
-                });
-                break;
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        return;
+                    }
 
-            case 'UNAUTHORIZED':
-                // User is not logged in - redirect to login
-                Swal.fire({
-                    title: 'Unauthorized Access',
-                    text: 'Please log in to continue.',
-                    icon: 'error',
-                    confirmButtonColor: '#8B5A2B',
-                    confirmButtonText: 'Login'
-                }).then(() => {
-                    window.location.href = '/login';
-                });
-                break;
+                    // Handle errors based on errorType
+                    switch (data.errorType) {
+                        case 'USER_BLOCKED':
+                            Swal.fire({
+                                title: 'Account Inactive',
+                                text: 'Your account is inactive. Please contact support for assistance.',
+                                icon: 'warning',
+                                confirmButtonColor: '#8B5A2B',
+                                confirmButtonText: 'Back to Login'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '/login';
+                                }
+                            });
+                            break;
 
-            case 'USER_NOT_FOUND':
-                Swal.fire({
-                    title: 'User Not Found',
-                    text: 'Your user account could not be found. Please try logging in again.',
-                    icon: 'error',
-                    confirmButtonColor: '#8B5A2B',
-                    confirmButtonText: 'Login'
-                }).then(() => {
-                    window.location.href = '/login';
-                });
-                break;
+                        case 'UNAUTHORIZED':
+                            // User is not logged in - redirect to login
+                            Swal.fire({
+                                title: 'Unauthorized Access',
+                                text: 'Please log in to continue.',
+                                icon: 'error',
+                                confirmButtonColor: '#8B5A2B',
+                                confirmButtonText: 'Login'
+                            }).then(() => {
+                                window.location.href = '/login';
+                            });
+                            break;
 
-            case 'SERVER_ERROR':
-                Swal.fire({
-                    title: 'Server Error',
-                    text: 'Something went wrong. Please try again later.',
-                    icon: 'error',
-                    confirmButtonColor: '#8B5A2B'
-                });
-                break;
+                        case 'USER_NOT_FOUND':
+                            Swal.fire({
+                                title: 'User Not Found',
+                                text: 'Your user account could not be found. Please try logging in again.',
+                                icon: 'error',
+                                confirmButtonColor: '#8B5A2B',
+                                confirmButtonText: 'Login'
+                            }).then(() => {
+                                window.location.href = '/login';
+                            });
+                            break;
 
-            default:
-                // Handle unknown errors
-                Swal.fire({
-                    title: 'Error',
-                    text: data.message || 'Something went wrong',
-                    icon: 'error',
-                    confirmButtonColor: '#8B5A2B'
-                });
-        }
-    })
-    .catch(error => { 
-        console.error('Error:', error);
+                        case 'SERVER_ERROR':
+                            Swal.fire({
+                                title: 'Server Error',
+                                text: 'Something went wrong. Please try again later.',
+                                icon: 'error',
+                                confirmButtonColor: '#8B5A2B'
+                            });
+                            break;
 
-        // Generic error alert
-        Swal.fire({
-            title: 'Error!',
-            text: 'Something went wrong. Please try again later.',
-            icon: 'error',
-            confirmButtonColor: '#8B5A2B'
-        });
-    });
-}
+                        default:
+                            // Handle unknown errors
+                            Swal.fire({
+                                title: 'Error',
+                                text: data.message || 'Something went wrong',
+                                icon: 'error',
+                                confirmButtonColor: '#8B5A2B'
+                            });
+                    }
+                })
+                .catch(error => { 
+                    console.error('Error:', error);
+
+                    // Generic error alert
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Something went wrong. Please try again later.',
+                        icon: 'error',
+                        confirmButtonColor: '#8B5A2B'
+                    });
+                });
+            }
+            
             const themeColors = {
                 primary: '#8B7355',
                 secondary: '#D2B48C',
@@ -410,18 +410,59 @@ checkUserStatus()
                     if (result.isConfirmed) {
                         showLoadingSpinner('Processing', 'Cancelling your order...');
                         
-                        setTimeout(() => {
+                        // Get the order ID from the page
+                        const orderId = document.getElementById('orderId').textContent;
+                        
+                        // Make a POST request to cancel the order
+                        fetch('/api/orders/cancel', { 
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': getCSRFToken() // Add this if your application uses CSRF protection
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({
+                                orderId: orderId
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            Swal.close();
+                            
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Order Cancelled',
+                                    text: 'Your order has been cancelled successfully!',
+                                    confirmButtonColor: themeColors.primary,
+                                    background: themeColors.light
+                                }).then(() => {
+                                    // Redirect to shop page after successful cancellation
+                                    window.location.href = '/shop';
+                                });
+                            } else {
+                                // Handle error case
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Cancellation Failed',
+                                    text: data.message || 'Unable to cancel your order. Please try again.',
+                                    confirmButtonColor: themeColors.primary,
+                                    background: themeColors.light
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            Swal.close();
+                            
                             Swal.fire({
-                                icon: 'success',
-                                title: 'Order Cancelled',
-                                text: 'Your order has been cancelled successfully!',
+                                icon: 'error',
+                                title: 'Cancellation Failed',
+                                text: 'Something went wrong while cancelling your order. Please try again.',
                                 confirmButtonColor: themeColors.primary,
                                 background: themeColors.light
-                            }).then(() => {
-                                // Redirect to cart page
-                                window.location.href = '/cart';
                             });
-                        }, 1500);
+                        });
                     }
                 });
             });
@@ -436,6 +477,24 @@ checkUserStatus()
                     },
                     background: themeColors.light
                 });
+            }
+            
+            // Helper function to get CSRF token if your application uses it
+            function getCSRFToken() {
+                // Get CSRF token from meta tag if available
+                const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+                if (tokenMeta) {
+                    return tokenMeta.getAttribute('content');
+                }
+                // Or from a cookie
+                return getCookie('csrf_token');
+            }
+            
+            // Helper function to get cookie value by name
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
             }
         });
     </script>

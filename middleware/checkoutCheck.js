@@ -6,6 +6,10 @@ module.exports = async (req, res, next) => {
     const cart = await Cart.findOne({ userId });
     
 
+        if (req.query.retryOrderId) {
+            return next();
+          }
+
     if (!cart || !cart.books || cart.books.length === 0) {
       return res.status(204).redirect('/cart'); 
     }
