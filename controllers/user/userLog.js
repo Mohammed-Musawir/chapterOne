@@ -87,7 +87,7 @@ const loadHome = async (req, res) => {
         
         if (productOffer) {
           bookObj.discount = productOffer.discountPercentage;
-          bookObj.discountedPrice = Math.round(bookObj.salePrice * (1 - productOffer.discountPercentage / 100));
+          bookObj.discountedPrice = Math.floor(bookObj.salePrice * (1 - productOffer.discountPercentage / 100));
           bookObj.offerName = productOffer.name;
           return bookObj;
         }
@@ -100,7 +100,7 @@ const loadHome = async (req, res) => {
           
           if (categoryOffer) {
             bookObj.discount = categoryOffer.discountPercentage;
-            bookObj.discountedPrice = Math.round(bookObj.salePrice * (1 - categoryOffer.discountPercentage / 100));
+            bookObj.discountedPrice = Math.floor(bookObj.salePrice * (1 - categoryOffer.discountPercentage / 100));
             bookObj.offerName = categoryOffer.name;
           }
         }

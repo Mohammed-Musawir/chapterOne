@@ -80,7 +80,7 @@ const loadProductPage = async (req, res) => {
         
         if (discountPercentage > 0) {
             // Calculate discounted price from the base price
-            product.finalPrice = Math.round(basePrice - (basePrice * discountPercentage / 100));
+            product.finalPrice = Math.floor(basePrice - (basePrice * discountPercentage / 100));
         } else {
             // No discount, final price equals base price
             product.finalPrice = basePrice;
@@ -145,7 +145,7 @@ const loadProductPage = async (req, res) => {
             
             if (relatedDiscountPercentage > 0) {
                 // Calculate discounted price from the base price
-                relatedProduct.finalPrice = Math.round(relatedBasePrice - (relatedBasePrice * relatedDiscountPercentage / 100));
+                relatedProduct.finalPrice = Math.floor(relatedBasePrice - (relatedBasePrice * relatedDiscountPercentage / 100));
             } else {
                 // No discount, final price equals base price
                 relatedProduct.finalPrice = relatedBasePrice;

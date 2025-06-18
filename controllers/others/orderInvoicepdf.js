@@ -242,16 +242,14 @@ function createProductTable(doc, order, tableTop, theme) {
     products.forEach((item, i) => {
         const isEven = i % 2 === 0;
         const rowY = y + (i * rowHeight);
-        
-       
+
         doc.rect(50, rowY, doc.page.width - 100, rowHeight)
            .fill(isEven ? theme.highlight : theme.secondary);
         
-       
         const productName = item.productDetails?.name || 'Unknown Product';
         const writer = item.productDetails?.writer || 'Unknown Author';
         const quantity = item.quantity || 0;
-        const price = item.price || 0;
+        const price = item.productDetails.discoundedPrice ? item.productDetails.discoundedPrice : item.product.salePrice;
         const total = quantity * price;
         
         doc.fillColor(theme.text)

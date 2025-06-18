@@ -39,7 +39,7 @@ const loadCheckOutPage = async (req, res) => {
               
               
               const originalPrice = product.salePrice;
-              const originalItemTotal = Math.round(originalPrice * item.quantity);
+              const originalItemTotal = Math.floor(originalPrice * item.quantity);
               originalSubtotal += originalItemTotal;
                               
               const productOffers = activeOffers.filter(offer => 
@@ -73,20 +73,20 @@ const loadCheckOutPage = async (req, res) => {
                   originalPrice;
                           
               
-              const totalForItem = Math.round(discountedPrice * item.quantity);
+              const totalForItem = Math.floor(discountedPrice * item.quantity);
               subtotal += totalForItem;
               
               
               if (bestOffer) {
-                  const itemDiscountAmount = Math.round((originalPrice - discountedPrice) * item.quantity);
+                  const itemDiscountAmount = Math.floor((originalPrice - discountedPrice) * item.quantity);
                   totalOfferDiscount += itemDiscountAmount;
               }
                               
               productsWithDiscounts.push({
                   product: product,
                   quantity: item.quantity,
-                  originalPrice: Math.round(originalPrice),
-                  discountedPrice: Math.round(discountedPrice),
+                  originalPrice: Math.floor(originalPrice),
+                  discountedPrice: Math.floor(discountedPrice),
                   appliedOffer: bestOffer,
                   totalPrice: totalForItem  
               });
@@ -94,7 +94,7 @@ const loadCheckOutPage = async (req, res) => {
       }
       
       const shippingCost = subtotal > 1000 ? 0 : 60;
-      const gstAmount = Math.round((subtotal) * 0.18);
+      const gstAmount = Math.floor((subtotal) * 0.18);
       const totalPrice = subtotal + gstAmount + shippingCost;
       
       

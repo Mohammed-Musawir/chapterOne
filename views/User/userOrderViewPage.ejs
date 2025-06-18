@@ -1205,15 +1205,14 @@
                                 <div class="product-title"><%= product.productDetails.name %></div>
                                 <div class="product-meta">Author: <%= product.productDetails.writer %></div>
                                 <div class="product-meta">Qty: <%= product.quantity %></div>
-                                <!-- <div class="product-price">₹<%= product.productDetails.salePrice.toFixed(2) %></div> -->
-                                  <!-- Updated price display with offer information -->
+
                                   <% if (product.offer) { %>
-                                    <div class="product-meta">₹<%= product.productDetails.salePrice.toFixed(2) %></div>
+                                    <div class="product-meta">₹<%= product.productDetails.salePrice %></div>
                                     <div class="product-price">
                                         <span class="product-price">₹<%= product.offer.offeredPrice %></span>
                                     </div>
                                 <% } else { %>
-                                    <div class="product-price">₹<%= product.productDetails.salePrice.toFixed(2) %></div>
+                                    <div class="product-price">₹<%= product.productDetails.salePrice %></div>
                                 <% } %>
                             </div>
                             
