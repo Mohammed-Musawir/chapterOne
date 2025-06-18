@@ -541,8 +541,8 @@ body {
                 <!-- Price -->
                 <div class="product-price mb-3">
                     <% if (product.discount > 0) { %>
-                        <span class="current-price">₹<%= product.salePrice.toFixed(2) %></span>
-                        <span class="original-price text-muted text-decoration-line-through me-2">₹<%= product.regularPrice.toFixed(2) %></span>
+                        <span class="current-price">₹<%= product.finalPrice.toFixed(2) %></span>
+                        <span class="original-price text-muted text-decoration-line-through me-2">₹<%= product.salePrice.toFixed(2) %></span>
                         <span class="discount-badge ms-2"><%= product.discount %>% OFF</span>
                     <% } else { %>
                         <span class="current-price">₹<%= product.salePrice.toFixed(2) %></span>
@@ -587,22 +587,19 @@ body {
                     <div class="row">
                         <div class="col-md-6">
                             <ul class="highlights-list">
-                                <!-- <li><strong>Publisher:</strong> <%= product.publisher %></li> -->
+        
                                 <li><strong>Language:</strong> <%= product.language %></li>
-                                <!-- <li><strong>Paperback:</strong> <%= product.pageCount %> pages</li>
-                                <li><strong>ISBN:</strong> <%= product.isbn %></li> -->
+
                             </ul>
                         </div>
                         <div class="col-md-6">
                             <ul class="highlights-list">
                                 <li><strong>Publication Date:</strong> <%= product.publishedDate.toISOString().split('T')[0] %></li>
-                                <!-- <li><strong>Dimensions:</strong> <%= product.dimensions %></li>
-                                <li><strong>Weight:</strong> <%= product.weight %></li>
-                                <li><strong>Edition:</strong> <%= product.edition %></li> -->
+
                             </ul>
                         </div>
                     </div>
-                </div>
+                </div> 
                 
                 <!-- Delivery information -->
                 <div class="delivery-info mb-4">

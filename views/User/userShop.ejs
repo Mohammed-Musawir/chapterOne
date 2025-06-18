@@ -291,9 +291,9 @@
                                   <h5 class="book-title"><%= product.title %></h5>
                                   <p class="book-author"><%= product.writer %></p>
                                   <p class="book-price fw-bold">
-                                    ₹<%= product.price.toFixed(2) %>
+                                    ₹<%= product.price %>
                                     <% if (product.hasOffer && product.offerPercentage > 0) { %>
-                                    <span class="original-price">₹<%= product.regularPrice.toFixed(2) %></span>
+                                    <span class="original-price">₹<%= product.regularPrice %></span>
                                     <% } %>
                                 </p>
 

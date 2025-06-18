@@ -7,23 +7,21 @@ const loadProductPage = async (req, res) => {
     try {
         const { id } = req.params;
         
-           let user = null;
+        let user = null;
         
-            
-            if (req.user?._id || req.user?.id) {
-              const userId = req.user._id || req.user.id;
-              user = await userModel.findById(userId);
-            }
+        if (req.user?._id || req.user?.id) {
+            const userId = req.user._id || req.user.id;
+            user = await userModel.findById(userId);
+        }
         
         const product = await productModal.findById(id).populate('category_id');
-        
         
         const relatedProducts = await productModal.find({
             category_id: product.category_id._id,
             _id: { $ne: product._id }
         });
         
-        
+        // Find product-specific offer
         const productOffer = await offerModal.findOne({
             offerType: 'product',
             product: product._id,
@@ -31,7 +29,7 @@ const loadProductPage = async (req, res) => {
             endDate: { $gt: new Date() }
         });
         
-        
+        // Find category-specific offer
         const categoryOffer = await offerModal.findOne({
             offerType: 'category',
             category: product.category_id._id,
@@ -39,13 +37,10 @@ const loadProductPage = async (req, res) => {
             endDate: { $gt: new Date() }
         });
         
-        
         let discountPercentage = 0;
         
-        
-        
+        // Apply the higher discount offer
         if (productOffer && categoryOffer) {
-            
             if (productOffer.discountPercentage >= categoryOffer.discountPercentage) {
                 product.offer = {
                     name: productOffer.name,
@@ -77,20 +72,26 @@ const loadProductPage = async (req, res) => {
             discountPercentage = categoryOffer.discountPercentage;
         }
         
+        // Calculate final price with offers (without modifying original salePrice)
+        product.discount = discountPercentage;
+        
+        // Use salePrice if available, otherwise use regularPrice as base
+        const basePrice = product.salePrice > 0 ? product.salePrice : product.regularPrice;
         
         if (discountPercentage > 0) {
-            
-            product.discount = discountPercentage;
-            product.salePrice = Math.round(product.regularPrice - (product.regularPrice * discountPercentage / 100));
+            // Calculate discounted price from the base price
+            product.finalPrice = Math.round(basePrice - (basePrice * discountPercentage / 100));
         } else {
-            
-            product.discount = 0;
-            if (product.salePrice === 0) {
-                product.salePrice = product.regularPrice;
-            }
+            // No discount, final price equals base price
+            product.finalPrice = basePrice;
         }
         
+        // Ensure salePrice is set for display purposes
+        if (product.salePrice === 0) {
+            product.salePrice = product.regularPrice;
+        }
         
+        // Process related products with offers
         const relatedProductsWithOffers = await Promise.all(relatedProducts.map(async (relatedProduct) => {
             const prodOffer = await offerModal.findOne({
                 offerType: 'product',
@@ -99,16 +100,17 @@ const loadProductPage = async (req, res) => {
                 endDate: { $gt: new Date() }
             });
             
-            const catOffer = categoryOffer; 
+            const catOffer = categoryOffer; // Same category offer as main product
             
             let relatedDiscountPercentage = 0;
             
+            // Apply the higher discount offer for related products
             if (prodOffer && catOffer) {
                 relatedDiscountPercentage = Math.max(prodOffer.discountPercentage, catOffer.discountPercentage);
                 
                 if (prodOffer.discountPercentage >= catOffer.discountPercentage) {
                     relatedProduct.offer = {
-                        name: prodOffer.name, 
+                        name: prodOffer.name,
                         description: prodOffer.description,
                         endDate: prodOffer.endDate
                     };
@@ -135,17 +137,27 @@ const loadProductPage = async (req, res) => {
                 };
             }
             
-            
+            // Calculate final price for related products (without modifying original salePrice)
             relatedProduct.discount = relatedDiscountPercentage;
+            
+            // Use salePrice if available, otherwise use regularPrice as base
+            const relatedBasePrice = relatedProduct.salePrice > 0 ? relatedProduct.salePrice : relatedProduct.regularPrice;
+            
             if (relatedDiscountPercentage > 0) {
-                relatedProduct.salePrice = Math.round(relatedProduct.regularPrice - (relatedProduct.regularPrice * relatedDiscountPercentage / 100));
-            } else if (relatedProduct.salePrice === 0) {
+                // Calculate discounted price from the base price
+                relatedProduct.finalPrice = Math.round(relatedBasePrice - (relatedBasePrice * relatedDiscountPercentage / 100));
+            } else {
+                // No discount, final price equals base price
+                relatedProduct.finalPrice = relatedBasePrice;
+            }
+            
+            // Ensure salePrice is set for display purposes
+            if (relatedProduct.salePrice === 0) {
                 relatedProduct.salePrice = relatedProduct.regularPrice;
             }
             
             return relatedProduct;
         }));
-        
         
         res.render('User/userProductPage', {
             user,
