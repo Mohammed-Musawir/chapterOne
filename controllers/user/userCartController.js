@@ -164,7 +164,7 @@ const loadCart = async (req, res) => {
         
         const totalProductPrice = subtotal;
         let shippingCost = totalProductPrice > 1000 ? 0 : 60;
-        const gstAmount = Math.round((totalProductPrice + shippingCost) * 0.18);
+        const gstAmount = Math.round((totalProductPrice) * 0.18);
         
 
         res.render('User/cartPage', { 
