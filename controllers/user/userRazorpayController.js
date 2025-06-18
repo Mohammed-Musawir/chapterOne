@@ -17,9 +17,10 @@ const razorpayController = {
       }
       
       const cart = await Cart.findOne({ userId }).populate('books.product'); 
-      if (!cart || cart.books.length === 0) {
-        return res.status(400).json({ success: false, message: 'Your cart is empty' });
-      }
+
+      console.log(`orderDetails ${orderDetails}`)
+      console.log(`amount ${amount}`)
+
       
       for (const item of cart.books) {
         const product = item.product;
@@ -94,10 +95,7 @@ const razorpayController = {
       }
       
       const cart = await Cart.findOne({ userId }).populate('books.product');
-      if (!cart || cart.books.length === 0) {
-        return res.status(400).json({ success: false, message: 'Your cart is empty' });
-      }
-  
+
       const mappedProducts = await Promise.all(cart.books.map(async (item) => {
         const product = item.product;
         
@@ -246,7 +244,7 @@ const razorpayController = {
         message: 'Internal server error during payment verification' 
       });
     }
-  },
+  }, 
 
   
   userPaymentError: async (req, res) => {

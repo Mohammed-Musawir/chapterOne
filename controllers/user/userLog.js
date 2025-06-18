@@ -592,8 +592,9 @@ const signup_Verify_otp = async (req,res) => {
         }
 
         const hashedPassword = await bycript.hash(req.session.userData.password,10)
-        
-         const referrer = await userModel.findOne({ referralCode:req.session.userData.referralCode });
+
+        if(req.session.userData.referralCode) {
+                    const referrer = await userModel.findOne({ referralCode:req.session.userData.referralCode });
 
                  if (!referrer) {
             return res.status(404).json({
@@ -602,6 +603,9 @@ const signup_Verify_otp = async (req,res) => {
             });
         }
 
+        }
+        
+ 
         let user = new userModel({
             firstname: req.session.userData.firstname,
             lastname: req.session.userData.lastname,

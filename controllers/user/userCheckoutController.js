@@ -12,120 +12,171 @@ const addTransaction = require('../../services/transactionService');
 
 const loadCheckOutPage = async (req, res) => {
   try { 
-      const userId = req.user._id || req.user.id;
-      const addresses = await addressModel.find({userId});
+    const retryOrderId = req.query.retryOrderId;
+    const userId = req.user._id || req.user.id;
+    const addresses = await addressModel.find({userId});
+    
+    let cart, productsWithDiscounts, subtotal, totalOfferDiscount, shippingCost, gstAmount, totalPrice;
+    let appliedCoupon = [];
+    
+    if (retryOrderId) {
+      // Handle retry order scenario
+      const existingOrder = await orderModel.findOne({orderId: retryOrderId});
       
-      const cart = await cartModel.findOne({userId}).populate('books.product');
-      
-      let totalItems = 0;
-      if (cart && cart.books.length > 0) {
-          totalItems = cart.books.reduce((acc, item) => acc + item.quantity, 0);
+      if (!existingOrder) {
+        return res.status(404).send("Order not found");
       }
-          
+      
+      // Use existing order data
+      subtotal = existingOrder.subtotal;
+      shippingCost = existingOrder.shippingCost;
+      gstAmount = existingOrder.gstAmount;
+      totalPrice = existingOrder.totalAmount;
+      
+      // Convert order products to cart-like format for rendering
+      productsWithDiscounts = existingOrder.products.map(item => ({
+        product: {
+          _id: item.product,
+          name: item.productDetails.name,
+          writer: item.productDetails.writer,
+          salePrice: item.productDetails.salePrice,
+          productImages: item.productDetails.productImages
+        },
+        quantity: item.quantity,
+        originalPrice: item.productDetails.salePrice,
+        discountedPrice: item.productDetails.discoundedPrice || item.productDetails.salePrice,
+        appliedOffer: null, // You might want to store offer details in order schema
+        totalPrice: (item.productDetails.discoundedPrice || item.productDetails.salePrice) * item.quantity
+      }));
+      
+      // Calculate total offer discount from the difference
+      totalOfferDiscount = existingOrder.products.reduce((acc, item) => {
+        const originalTotal = item.productDetails.salePrice * item.quantity;
+        const discountedTotal = (item.productDetails.discoundedPrice || item.productDetails.salePrice) * item.quantity;
+        return acc + (originalTotal - discountedTotal);
+      }, 0);
+      
+      // Set coupon data if exists
+      if (existingOrder.coupon && existingOrder.coupon.couponCode) {
+        appliedCoupon = [{
+          couponCode: existingOrder.coupon.couponCode,
+          discount: existingOrder.coupon.discount
+        }];
+      }
+      
+      // Create a mock cart object for rendering
+      cart = {
+        books: productsWithDiscounts.map(item => ({
+          product: item.product,
+          quantity: item.quantity
+        }))
+      };
+      
+    } else {
+      // Normal checkout flow - calculate from cart
+      cart = await cartModel.findOne({userId}).populate('books.product');
+      
       const currentDate = new Date();
       const activeOffers = await offerModel.find({
-          isActive: true,
-          endDate: { $gt: currentDate }
+        isActive: true,
+        endDate: { $gt: currentDate }
       });
-          
-      const productsWithDiscounts = [];
+      
+      productsWithDiscounts = [];
       let originalSubtotal = 0;
-      let subtotal = 0;
-      let totalOfferDiscount = 0;
+      subtotal = 0;
+      totalOfferDiscount = 0;
       
       if (cart && cart.books.length > 0) {
-          for (const item of cart.books) {
-              const product = item.product;
-              
-              
-              const originalPrice = product.salePrice;
-              const originalItemTotal = Math.floor(originalPrice * item.quantity);
-              originalSubtotal += originalItemTotal;
-                              
-              const productOffers = activeOffers.filter(offer => 
-                  offer.offerType === 'product' &&
-                  offer.product &&
-                  offer.product.toString() === product._id.toString()
-              );
-                              
-              const categoryOffers = activeOffers.filter(offer => 
-                  offer.offerType === 'category' &&
-                  offer.category &&
-                  offer.category.toString() === product.category_id.toString()
-              );
-                              
-              const allApplicableOffers = [...productOffers, ...categoryOffers];
-              
-              let bestOffer = null;
-              let highestDiscount = 0;
-              
-              allApplicableOffers.forEach(offer => {
-                  const discountAmount = (product.salePrice * offer.discountPercentage) / 100;
-                  if (discountAmount > highestDiscount) {
-                      highestDiscount = discountAmount;
-                      bestOffer = offer;
-                  }
-              });
-                              
-              
-              const discountedPrice = bestOffer ?
-                  originalPrice - (originalPrice * bestOffer.discountPercentage / 100) :
-                  originalPrice;
-                          
-              
-              const totalForItem = Math.floor(discountedPrice * item.quantity);
-              subtotal += totalForItem;
-              
-              
-              if (bestOffer) {
-                  const itemDiscountAmount = Math.floor((originalPrice - discountedPrice) * item.quantity);
-                  totalOfferDiscount += itemDiscountAmount;
-              }
-                              
-              productsWithDiscounts.push({
-                  product: product,
-                  quantity: item.quantity,
-                  originalPrice: Math.floor(originalPrice),
-                  discountedPrice: Math.floor(discountedPrice),
-                  appliedOffer: bestOffer,
-                  totalPrice: totalForItem  
-              });
+        for (const item of cart.books) {
+          const product = item.product;
+          
+          const originalPrice = product.salePrice;
+          const originalItemTotal = Math.floor(originalPrice * item.quantity);
+          originalSubtotal += originalItemTotal;
+          
+          const productOffers = activeOffers.filter(offer => 
+            offer.offerType === 'product' &&
+            offer.product &&
+            offer.product.toString() === product._id.toString()
+          );
+          
+          const categoryOffers = activeOffers.filter(offer => 
+            offer.offerType === 'category' &&
+            offer.category &&
+            offer.category.toString() === product.category_id.toString()
+          );
+          
+          const allApplicableOffers = [...productOffers, ...categoryOffers];
+          
+          let bestOffer = null;
+          let highestDiscount = 0;
+          
+          allApplicableOffers.forEach(offer => {
+            const discountAmount = (product.salePrice * offer.discountPercentage) / 100;
+            if (discountAmount > highestDiscount) {
+              highestDiscount = discountAmount;
+              bestOffer = offer;
+            }
+          });
+          
+          const discountedPrice = bestOffer ?
+            originalPrice - (originalPrice * bestOffer.discountPercentage / 100) :
+            originalPrice;
+          
+          const totalForItem = Math.floor(discountedPrice * item.quantity);
+          subtotal += totalForItem;
+          
+          if (bestOffer) {
+            const itemDiscountAmount = Math.floor((originalPrice - discountedPrice) * item.quantity);
+            totalOfferDiscount += itemDiscountAmount;
           }
+          
+          productsWithDiscounts.push({
+            product: product,
+            quantity: item.quantity,
+            originalPrice: Math.floor(originalPrice),
+            discountedPrice: Math.floor(discountedPrice),
+            appliedOffer: bestOffer,
+            totalPrice: totalForItem  
+          });
+        }
       }
       
-      const shippingCost = subtotal > 1000 ? 0 : 60;
-      const gstAmount = Math.floor((subtotal) * 0.18);
-      const totalPrice = subtotal + gstAmount + shippingCost;
+      shippingCost = subtotal > 1000 ? 0 : 60;
+      gstAmount = Math.floor(subtotal * 0.18);
+      totalPrice = subtotal + gstAmount + shippingCost;
       
-      
-      const TotalPrice = totalPrice;
-      const Subtotal = subtotal;
-      const TotalOfferDiscount = totalOfferDiscount;
-      
-      
-      const activeCoupons = await couponmodel.find({
-          isBlocked: false,
-          expireDate: { $gt: currentDate },
-          usedBy: { $nin: [userId] }
-      });
-      
-      const appliedCoupon = req.session.appliedCoupon || [];
-      
-      res.render("User/userCheckoutPage", {
-          addresses,
-          subtotal: Subtotal,
-          shippingCost,
-          gstAmount,
-          totalPrice: TotalPrice,
-          totalOfferDiscount: TotalOfferDiscount,
-          activeCoupons,
-          appliedCoupon,
-          cart,
-          productsWithDiscounts
-      });
+      // Get session applied coupon for normal flow
+      appliedCoupon = req.session.appliedCoupon || [];
+    }
+    
+    // Get active coupons (common for both flows)
+    const currentDate = new Date();
+    const activeCoupons = await couponmodel.find({
+      isBlocked: false,
+      expireDate: { $gt: currentDate },
+      usedBy: { $nin: [userId] }
+    });
+    
+    res.render("User/userCheckoutPage", {
+      addresses,
+      subtotal,
+      shippingCost,
+      gstAmount,
+      totalPrice,
+      totalOfferDiscount,
+      activeCoupons,
+      appliedCoupon,
+      cart,
+      productsWithDiscounts,
+      isRetryOrder: !!retryOrderId,
+      retryOrderId: retryOrderId
+    });
+    
   } catch (error) {
-      console.error(error.message);
-      res.status(500).send("Something went wrong");
+    console.error(error.message);
+    res.status(500).send("Something went wrong");
   }
 };
 

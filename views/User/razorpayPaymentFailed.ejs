@@ -247,12 +247,13 @@
                 <div class="order-details">
                     <h3><i class="fas fa-shopping-bag"></i> Order Information</h3>
                     <div class="detail-row">
-                        <span class="detail-label">Order ID:</span>
-                        <span class="detail-value" id="orderId">ORD-<%= Math.floor(100000 + Math.random() * 900000) %></span>
+
+                        <!-- <span class="detail-label">Order ID: <%=orderId  %></span>
+                        <span class="detail-value" id="orderId"> %></span> -->
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Amount:</span>
-                        <span class="detail-value" id="orderAmount">₹<%= Math.floor(1000 + Math.random() * 9000) %>.00</span>
+                        <span class="detail-value" id="orderAmount">₹<%= amount %></span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Date:</span>
@@ -394,78 +395,77 @@
                 }, 1500);
             });
             
-            document.getElementById('cancel-order').addEventListener('click', function(e) {
-                e.preventDefault();
+document.getElementById('cancel-order').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    Swal.fire({
+        title: 'Cancel Order?',
+        text: 'Are you sure you want to cancel this order?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: themeColors.error,
+        cancelButtonColor: themeColors.secondary,
+        confirmButtonText: 'Yes, cancel it!',
+        background: themeColors.light
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showLoadingSpinner('Processing', 'Cancelling your order...');
+            
+            // Make a POST request to cancel the order
+            fetch('/api/orders/cancel', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin' // Add this for session access
+            })
+            .then(response => {
+                // Check if response is ok before parsing JSON
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                Swal.close(); // Close loading spinner
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Order Cancelled',
+                        text: 'Your order has been cancelled successfully!',
+                        confirmButtonColor: themeColors.primary,
+                        background: themeColors.light
+                    }).then(() => {
+                        // Redirect to shop page after successful cancellation
+                        window.location.href = '/shop';
+                    });
+                } else {
+                    // Handle error case
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cancellation Failed',
+                        text: data.message || 'Unable to cancel your order. Please try again.',
+                        confirmButtonColor: themeColors.primary,
+                        background: themeColors.light
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.close(); 
                 
                 Swal.fire({
-                    title: 'Cancel Order?',
-                    text: 'Are you sure you want to cancel this order?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: themeColors.error,
-                    cancelButtonColor: themeColors.secondary,
-                    confirmButtonText: 'Yes, cancel it!',
+                    icon: 'error',
+                    title: 'Cancellation Failed',
+                    text: 'Something went wrong while cancelling your order. Please try again.',
+                    confirmButtonColor: themeColors.primary,
                     background: themeColors.light
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        showLoadingSpinner('Processing', 'Cancelling your order...');
-                        
-                        // Get the order ID from the page
-                        const orderId = document.getElementById('orderId').textContent;
-                        
-                        // Make a POST request to cancel the order
-                        fetch('/api/orders/cancel', { 
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-Token': getCSRFToken() // Add this if your application uses CSRF protection
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({
-                                orderId: orderId
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            Swal.close();
-                            
-                            if (data.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Order Cancelled',
-                                    text: 'Your order has been cancelled successfully!',
-                                    confirmButtonColor: themeColors.primary,
-                                    background: themeColors.light
-                                }).then(() => {
-                                    // Redirect to shop page after successful cancellation
-                                    window.location.href = '/shop';
-                                });
-                            } else {
-                                // Handle error case
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Cancellation Failed',
-                                    text: data.message || 'Unable to cancel your order. Please try again.',
-                                    confirmButtonColor: themeColors.primary,
-                                    background: themeColors.light
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            Swal.close();
-                            
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Cancellation Failed',
-                                text: 'Something went wrong while cancelling your order. Please try again.',
-                                confirmButtonColor: themeColors.primary,
-                                background: themeColors.light
-                            });
-                        });
-                    }
                 });
             });
+        }
+    });
+});
             
             function showLoadingSpinner(title, text = '') {
                 return Swal.fire({
